@@ -1,1 +1,1 @@
-{"name":"ulike-new-industry-by-label","version":"1.0.0","private":true,"type":"module","scripts":{"test":"node --test tests/*.test.mjs","check":"node --check app.js && node --check data-client.js && node --test tests/*.test.mjs","serve":"node scripts/serve.mjs"}}
+{"name":"ulike-new-industry-by-label","version":"2.0.0","private":true,"type":"module","scripts":{"test":"node --test tests/*.test.mjs","check":"node --check app.js && node --check data-client.js && node --test tests/*.test.mjs","serve":"node scripts/serve.mjs"}}

@@ -11,18 +11,24 @@ def brand(s):
 def key(s):return hashlib.sha256(s.encode()).hexdigest()[:20]
 def model_tokens(b,t):
  t=norm(t).upper().replace('－','-')
+ t=re.sub(r'\s*-\s*','-',t)
+ if b=='欧姆龙':t=re.sub(r'\bNE\s+(C\d)',r'NE-\1',t)
+ if b=='鱼跃':t=re.sub(r'\b403\s+([A-Z])\b',r'403\1',t)
  t=re.sub(r'(?:YUWELL|OMRON|HAIER|PHILIPS|DEDAKJ)(?=\d+L)', '', t)
  t=re.sub(r'(?:\d+(?:\.\d+)?L){2,}', ' ',t)
  tokens=re.findall(r'(?<![A-Z0-9])(?=[A-Z0-9-]*\d)(?=[A-Z0-9-]*[A-Z])[A-Z0-9]+(?:-[A-Z0-9]+)*',t)
  out=[]
  for m in tokens:
   unit=bool(re.fullmatch(r'\d+(?:L|ML|KG|DB|V|W|H|CM|MM|M|D|MIN|HZ|AH|MAH|K|G|KW|PCS|IN1)',m))
-  known_short=(b=='鱼跃' and m in ['403M','403K'])
+  known_short=(b=='鱼跃' and bool(re.fullmatch(r'403[A-Z]*',m))) or (b=='海尔' and m in ['5H','503W','505W'])
   if unit and not known_short:continue
-  if len(m)<3:continue
-  if b=='欧姆龙' and re.fullmatch(r'(?:NE-)?C\d{2,4}[A-Z]*',m):m=re.sub(r'^NE-','',m)
+  if len(m)<2:continue
+  if b=='欧姆龙' and re.fullmatch(r'(?:NE-?)?C\d{2,4}[A-Z]*',m):m=re.sub(r'^NE-?','',m)
+  m=m.replace('-','')
   out.append(m)
  if b=='飞利浦' and 'EVERFLO' in t:out.append('EVERFLO')
+ if b=='百瑞':
+  for m in re.findall(r'\bBOY\s*(JUNIOR|PRO|CLASSIC|SX)\b',t):out.append('BOY'+m)
  return sorted(set(out))
 def basic(r):
  t=norm(r['item_name']);b=brand(r['brand_name']);cat=r['jq_cate3']
@@ -69,9 +75,22 @@ def build_dictionary(rows):
   ('飞利浦','oxygen','EVERFLO',['home','medical','mechanism'],'https://www.documents.philips.com/assets/20210225/420e5eb17efa4da0b5f2acda00bc3539.pdf'),
   ('欧姆龙','nebulizer','C801',['home','medical','mechanism'],'https://omronhealthcare.com/nebulizers')
  ]:
-  for f in fields:d[(b,target,m)][f].insert(0,{'source_url':url,'type':'primary_source'})
+  for f in fields:d[(b,target,m.replace('-',''))][f].insert(0,{'source_url':url,'type':'primary_source'})
+ # Resolve missing titles through the exact platform/item/store/brand history.
+ # Every link sharing a label must qualify; conflicting excluded history blocks inheritance.
+ links=collections.defaultdict(dict);blocked=set();titles=collections.defaultdict(set)
+ for r in rows:
+  p=basic(r)
+  if not p['target'] or not r.get('item_id') or not p['brand']:continue
+  lk=(p['target'],r['plat'],str(r['item_id']),str(r.get('store_id')),p['brand'])
+  tk=('@title',p['target'],key('|'.join((norm(r['brand_name']),norm(r['item_name']),r['jq_cate3']))))
+  titles[tk].add(lk)
+  if p['status']=='excluded':blocked.add(lk)
+  elif '家用' in norm(r['item_name']):links[lk]={'platform':r['plat'],'item_id':str(r['item_id']),'month':r['y_m'],'title':r['item_name']}
+ for tk,lks in titles.items():
+  if all(k in links and k not in blocked for k in lks):d[tk]['link_home']=[links[k] for k in sorted(lks)][:3]
  return d
-def classify(r,d):
+def legacy_classify(r,d):
  p=basic(r)
  if p['status']:return p
  if len(p['models'])>1:return dict(p,status='pending',reason='多型号或比较型号待确认')
@@ -82,3 +101,22 @@ def classify(r,d):
     p[f]=True;p['basis']='same_model';p['evidence'].append({'field':f,'model':m,'source':ev[f][0]})
  missing=[{'home':'家用或个人使用','medical':'医疗用途','mechanism':'分子筛原理' if p['target']=='oxygen' else '压缩原理'}[f] for f in ('home','medical','mechanism') if not p[f]]
  return dict(p,status='pending' if missing else 'included',reason='待确认：'+'、'.join(missing) if missing else '标题及同品牌同型号证据符合')
+
+MIXED={'整机与配件混合标题待确认','雾化与洗鼻功能待确认','呼吸机与制氧机组合待拆分','多原理混售待确认','多型号或比较型号待确认'}
+def classify(r,d):
+ p=legacy_classify(r,d)
+ p['mixed_reason']=p['reason'] if p['reason'] in MIXED else None
+ p['source_category']=' > '.join(str(r.get(k) or '') for k in ('jq_cate1','jq_cate2','jq_cate3')).strip(' >')
+ if p['status']=='excluded':return p
+ if '家用' in norm(r['item_name']):
+  return dict(p,status='included',reason='用户口径：标题含家用，直接纳入'+('；混合链接金额未拆分' if p['mixed_reason'] else ''),basis='home_policy')
+ tk=('@title',p['target'],key('|'.join((norm(r['brand_name']),norm(r['item_name']),r['jq_cate3']))))
+ linked=d.get(tk,{}).get('link_home')
+ if linked:
+  p['evidence'] += [{'field':'home','model':'同链接历史','source':s} for s in linked]
+  return dict(p,status='included',reason='同平台同商品链接历史标题含家用'+('；混合链接金额未拆分' if p['mixed_reason'] else ''),basis='same_link')
+ # Every model must independently have home evidence; never propagate between brands or variants.
+ if p['brand'] and p['models'] and all(d.get((p['brand'],p['target'],m),{}).get('home') for m in p['models']):
+  p['evidence'] += [{'field':'home','model':m,'source':d[(p['brand'],p['target'],m)]['home'][0]} for m in p['models']]
+  return dict(p,status='included',reason='同品牌标准型号关联家用证据'+('；混合链接金额未拆分' if p['mixed_reason'] else ''),basis='same_model')
+ return p

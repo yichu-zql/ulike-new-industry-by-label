@@ -1,14 +1,14 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="基于久谦商品数据，研究家用医用压缩式雾化器与分子筛制氧机的销售、品牌及商品归类依据。"><title>家用医疗设备研究 · Ulike品类研究</title><link rel="stylesheet" href="styles.css?v=1.0.0"><script type="module" src="app.js?v=1.0.0"></script></head>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="基于久谦商品数据，研究家用医用压缩式雾化器与分子筛制氧机的销售、品牌及商品归类依据。"><title>家用医疗设备研究 · Ulike品类研究</title><link rel="stylesheet" href="styles.css?v=2.0.0"><script type="module" src="app.js?v=2.0.0"></script></head>
 <body>
 <header class="masthead"><a class="identity" href="./"><span class="monogram">U</span><span><b>ULIKE <span class="identity-light">品类研究</span></b><small>商品打标 · 行业观察</small></span></a><div class="header-actions"><span class="source-date">数据截至 <b>2026.09</b></span><button id="method-button" class="quiet">口径与来源 ↗</button></div></header>
 <main>
-<section class="intro"><div><div class="eyebrow">JIUQIAN DATA / LABEL-BASED RESEARCH</div><h1>家用医疗设备研究</h1><p>从商品识别到行业判断，保留每一项归类的依据。</p></div><span class="version">研究版 1.0<span>2026.11.04 发布</span></span></section>
+<section class="intro"><div><div class="eyebrow">JIUQIAN DATA / LABEL-BASED RESEARCH</div><h1>家用医疗设备研究</h1><p>从商品识别到行业判断，保留每一项归类的依据。</p></div><span class="version">研究版 2.0<span>2026.11.04 发布</span></span></section>
 <section class="workspace" aria-label="研究范围">
 <div class="category-tabs" role="group" aria-label="选择品类"><button data-target="nebulizer" aria-pressed="true"><span class="category-icon">◌</span><span><b>医用压缩式雾化器</b><small>家用 / 个人使用</small></span></button><button data-target="oxygen" aria-pressed="false"><span class="category-icon">O₂</span><span><b>医用分子筛制氧机</b><small>家用 / 个人使用</small></span></button></div>
 <div class="filters"><label>平台<select id="platform"><option value="all">三平台合计</option><option value="tmall">天猫</option><option value="jd">京东</option><option value="douyin">抖音</option></select></label><label>年份<select id="year"><option>2026</option><option>2025</option><option>2024</option><option>2023</option></select></label><label>时间口径<select id="mode"><option value="year">自然年 / 年累计</option><option value="month">自然月</option></select></label><label id="month-label" hidden>月份<select id="month"></select></label><span id="scope-caption" class="scope-caption"></span><button id="reset" class="quiet">重置</button></div>
 </section>
-<div class="scope-note"><span class="note-marker">!</span><span><b>已覆盖商品样本，不是完整行业总量。</b> 纳入依据为标题及同品牌同型号证据；排除专业操作的院用设备，证据不足单列待确认。</span></div>
+<div class="scope-note"><span class="note-marker">!</span><span><b>已覆盖商品样本，不是完整行业总量。</b> 按“家用”字样及同品牌标准型号证据纳入；排除专业操作的院用设备，证据不足单列待确认。</span></div>
 <nav class="view-tabs" aria-label="数据视图"><button data-view="overview" aria-current="page">规模与趋势</button><button data-view="brands">品牌格局</button><button data-view="products">商品与打标</button><span id="current-scope"></span></nav>
 <div id="status" role="status" aria-live="polite">正在读取研究数据…</div>
 <div id="content"></div>
