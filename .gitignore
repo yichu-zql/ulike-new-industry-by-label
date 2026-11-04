@@ -1,0 +1,12 @@
+node_modules/
+.private/
+.cache/
+pipeline/raw/
+pipeline/label-cache.json
+pipeline/conflicts.json
+pipeline/model-evidence.json
+pipeline/title-profile.json
+pipeline/audit-report.json
+outputs/
+__pycache__/
+*.log
