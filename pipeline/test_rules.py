@@ -37,4 +37,25 @@ class RulesTest(unittest.TestCase):
  def test_mixed_retained_under_home_policy(self):
   p=self.decision('家用医用压缩式雾化器雾化面罩',cat='雾化器')
   self.assertEqual(p['status'],'included');self.assertIsNotNone(p['mixed_reason'])
+ def test_chinese_model_boundaries(self):
+  self.assertEqual(model_tokens('百瑞','帕瑞BOY PRO儿童雾化器'),['BOYPRO'])
+  self.assertEqual(model_tokens('可孚','523W Y525W KF10-5'),['KF105YW','KJRY523W','KJRY525W'])
+  self.assertEqual(model_tokens('劲氧 ganityoung','YDD-5B/6B'),['YDD5B','YDD6B'])
+ def test_model_then_link(self):
+  a=row('家用制氧机K100');a['item_id']=2
+  b=row('制氧机K100');c=row('轻音氧气机')
+  d=build_dictionary([a,b,c]);self.assertEqual(classify(c,d)['status'],'included')
+ def test_mesh_history_and_model_exclusion(self):
+  a=row('家用网式雾化器M102',cat='雾化器');b=row('手持轻音',cat='雾化器')
+  d=build_dictionary([a,b]);self.assertEqual(classify(b,d)['status'],'excluded')
+  c=row('家用雾化器M102',cat='雾化器');c['item_id']=3
+  self.assertEqual(classify(c,d)['status'],'excluded')
+ def test_false_category_matches(self):
+  for title in ['家用储雾罐','家用峰流速仪','医用电子口喷雾化器','潓美氢氧气机']:
+   self.assertEqual(self.decision(title)['status'],'excluded')
+ def test_identical_short_titles_are_link_scoped(self):
+  a=row('家用制氧机');b=row('短标题');c=row('短标题');c['item_id']=2
+  d=build_dictionary([a,b,c])
+  self.assertEqual(classify(b,d)['status'],'included');self.assertEqual(classify(c,d)['status'],'pending')
+  self.assertNotEqual(label_key(b),label_key(c))
 if __name__=='__main__':unittest.main()

@@ -1,6 +1,6 @@
 """Build monthly/annual observed sales, exact brand unions, coverage audits and hashed web assets."""
 import json,gzip,pathlib,collections,hashlib,time,csv,decimal,datetime,shutil,os
-from classify import RULES,norm,brand,key,basic,build_dictionary,classify
+from classify import RULES,norm,brand,key,basic,build_dictionary,classify,label_key
 from profile import read
 D=decimal.Decimal
 ROOT=pathlib.Path(__file__).resolve().parent
@@ -63,7 +63,7 @@ def main():
    if r['jq_cate3'] in CATS:
     add(coverage[(r['jq_cate3'],r['plat'],r['y_m'])][kind],r,brand(r.get('brand_name')))
  for r in data:
-  ck=(norm(r['brand_name']),norm(r['item_name']),r['jq_cate3'])
+  ck=label_key(r)
   if ck not in memo:
    if ck in cached:memo[ck]=cached[ck];cache_hits+=1
    else:memo[ck]=classify(r,d)
@@ -135,7 +135,7 @@ def main():
  manifest={'schema_version':1,'rule_version':RULES['version'],'as_of_month':last,'snapshot':json.loads((ROOT/'raw/manifest.json').read_text(encoding='utf-8')),
   'scope':'家用或个人使用；排除需要专业人员操作的院用设备；纳入按标题及同型号证据，非逐项注册验证',
   'metric_status':'observed_sample_not_total_market','gmv_definition':'源字段gmv；沿用现有项目退后口径，源表未提供退款字段，未获源方再次确认',
-  'platforms':PLATS,'targets':TARGETS,'assets':assets,'audits':audits,'status_counts':dict(statuses),'label_count':len(memo),'model_count':sum(k[0]!='@title' for k in d),
+  'platforms':PLATS,'targets':TARGETS,'assets':assets,'audits':audits,'status_counts':dict(statuses),'label_count':len(memo),'model_count':sum(not k[0].startswith('@') for k in d),
   'source_coverage_note':'行业/品牌大盘仅作对账，品牌数取纳入商品的成交品牌并集。商品表存在截断迹象。','cache_hits':cache_hits}
  # Database SQL is local provenance, not needed on the future public page.
  manifest['snapshot'].pop('queries',None)
@@ -158,7 +158,7 @@ def main():
    assert allb['gmv']==sum((summary[(target,p,ym,'included')]['gmv'] for p in PLATS if p!='all'),D(0))
    assert allb['brands']==set().union(*(summary[(target,p,ym,'included')]['brands'] for p in PLATS if p!='all'))
  checks=['32组年度金额/销量等于逐月合计','32组年度品牌数等于月份品牌并集','90组跨平台金额及品牌去重一致','2026年10—12月保留缺失','商品状态互斥']
- report={'audits':audits,'statuses':dict(statuses),'unique_labels':len(memo),'dictionary_models':sum(k[0]!='@title' for k in d),'checks':checks,'elapsed_seconds':round(time.perf_counter()-t,2),
+ report={'audits':audits,'statuses':dict(statuses),'unique_labels':len(memo),'dictionary_models':sum(not k[0].startswith('@') for k in d),'checks':checks,'elapsed_seconds':round(time.perf_counter()-t,2),
   'annual_all':[r for r in annual if r['平台']=='三平台合计'],'coverage_summary':{p:{'min':min(r['商品金额覆盖率'] for r in cov if r['平台']==p and r['商品金额覆盖率'] is not None),
   'max':max(r['商品金额覆盖率'] for r in cov if r['平台']==p and r['商品金额覆盖率'] is not None),'rows_500':sum(r['商品行数']==500 for r in cov if r['平台']==p)} for p in ['天猫','京东','抖音']},
   'asset_summary':assets['summary'],'cache_hits':cache_hits,'top_pending':reviews[:30]}

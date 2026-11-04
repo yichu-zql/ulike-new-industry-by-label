@@ -1,5 +1,5 @@
 {
-  "version": "2.0.0",
+  "version": "3.0.0",
   "targets": {
     "nebulizer": "家用医用压缩式雾化器",
     "oxygen": "家用医用分子筛制氧机"
@@ -43,6 +43,7 @@
     "乐普 lepu medical": "乐普",
     "怡得 yide": "怡得",
     "柯尔 carer": "柯尔",
-    "瑞贝松 ruibeisong": "瑞贝松"
+    "瑞贝松 ruibeisong": "瑞贝松",
+    "帕瑞": "百瑞"
   }
 }
