@@ -1,1 +1,15 @@
-{"name":"ulike-new-industry-by-label","version":"3.0.0","private":true,"type":"module","scripts":{"test":"node --test tests/*.test.mjs","check":"node --check app.js && node --check data-client.js && node --test tests/*.test.mjs","serve":"node scripts/serve.mjs"}}
+{
+  "name": "ulike-new-industry-by-label",
+  "version": "4.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check app.js && node --check data-client.js && node --check workbench/app.js && node --check workbench/worker.js && node --check workbench/core.js && node --check workbench/store.js && node --test tests/*.test.mjs",
+    "serve": "node scripts/serve.mjs"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "^6.2.7",
+    "jsdom": "^29.1.1"
+  }
+}
